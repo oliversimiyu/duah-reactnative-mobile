@@ -29,9 +29,11 @@ export default function HomeScreen({ navigation, route }) {
   // Step detection variables
   const lastMagnitude = useRef(1);
   const lastTimestamp = useRef(0);
-  const stepThreshold = 0.15; // Lower threshold for better detection
+  const stepThreshold = 0.2; // Adjusted threshold
   const dailyStepGoal = 10000;
   const accelerometerSubscription = useRef(null);
+  const magnitudeHistory = useRef([]);
+  const peakDetected = useRef(false);
   
   // Location tracking
   const [locationSubscription, setLocationSubscription] = useState(null);
@@ -82,24 +84,54 @@ export default function HomeScreen({ navigation, route }) {
         // Update sensor data for debugging
         setSensorData({ x: x.toFixed(2), y: y.toFixed(2), z: z.toFixed(2), mag: magnitude.toFixed(2) });
         
-        // Detect step by comparing magnitude changes
-        // A step creates a significant change in total acceleration
-        const magnitudeChange = Math.abs(magnitude - lastMagnitude.current);
+        // Add to history (keep last 10 readings for smoothing)
+        magnitudeHistory.current.push(magnitude);
+        if (magnitudeHistory.current.length > 10) {
+          magnitudeHistory.current.shift();
+        }
         
-        if (magnitudeChange > stepThreshold) {
-          // Prevent double counting (minimum 300ms between steps)
-          // Average walking pace is about 2 steps per second
-          if (currentTimestamp - lastTimestamp.current > 300) {
-            setSteps(prevSteps => {
-              const newSteps = prevSteps + 1;
-              console.log('Step detected! Total steps:', newSteps);
-              return newSteps;
-            });
-            lastTimestamp.current = currentTimestamp;
-            
-            // Simulate heart rate variation during activity
-            setHeartRate(prev => Math.min(120, Math.max(70, prev + (Math.random() * 4 - 2))));
+        // Need at least 5 readings for pattern detection
+        if (magnitudeHistory.current.length < 5) {
+          lastMagnitude.current = magnitude;
+          return;
+        }
+        
+        // Detect peak (magnitude higher than neighbors)
+        const prevMag = magnitudeHistory.current[magnitudeHistory.current.length - 2];
+        const isPeak = magnitude > lastMagnitude.current && magnitude > prevMag;
+        
+        // Detect valley (magnitude lower than neighbors)
+        const isValley = magnitude < lastMagnitude.current && magnitude < prevMag;
+        
+        // A step is detected when we see a peak followed by a valley
+        // This pattern is characteristic of walking, not random shaking
+        if (isPeak && !peakDetected.current) {
+          peakDetected.current = true;
+        } else if (isValley && peakDetected.current) {
+          // Calculate the magnitude difference
+          const magnitudeChange = Math.abs(magnitude - lastMagnitude.current);
+          
+          // Check if this looks like a walking pattern
+          if (magnitudeChange > stepThreshold) {
+            // Prevent double counting (minimum 250ms between steps)
+            // Normal walking pace is 1.5-2 steps per second
+            if (currentTimestamp - lastTimestamp.current > 250) {
+              // Additional validation: check if magnitude is within walking range
+              // Typical walking magnitude is between 0.8 and 1.5
+              if (magnitude > 0.5 && magnitude < 2.0) {
+                setSteps(prevSteps => {
+                  const newSteps = prevSteps + 1;
+                  console.log('Step detected! Total steps:', newSteps);
+                  return newSteps;
+                });
+                lastTimestamp.current = currentTimestamp;
+                
+                // Simulate heart rate variation during activity
+                setHeartRate(prev => Math.min(120, Math.max(70, prev + (Math.random() * 4 - 2))));
+              }
+            }
           }
+          peakDetected.current = false;
         }
         
         lastMagnitude.current = magnitude;
@@ -168,6 +200,8 @@ export default function HomeScreen({ navigation, route }) {
             setDistance(0);
             setHeartRate(72);
             lastPosition.current = null;
+            magnitudeHistory.current = [];
+            peakDetected.current = false;
           },
         },
       ]
@@ -329,7 +363,11 @@ export default function HomeScreen({ navigation, route }) {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
-            <QuickActionButton icon="🏃" label="Start Workout" />
+            <QuickActionButton 
+              icon="🏃" 
+              label="Track Activity" 
+              onPress={() => navigation.navigate('ActivityTracker')}
+            />
             <QuickActionButton icon="🍎" label="Log Meal" />
             <QuickActionButton icon="💊" label="Medication" />
             <QuickActionButton icon="📊" label="Reports" />
@@ -392,19 +430,6 @@ export default function HomeScreen({ navigation, route }) {
               {isTracking 
                 ? 'Activity tracking is active. Your steps, distance, and calories are being monitored in real-time.' 
                 : 'Activity tracking is paused. Press the play button in the header to resume tracking.'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Sensor Debug Info */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Sensor Debug</Text>
-          <View style={[styles.tipCard, { backgroundColor: colors.surfaceVariant }]}>
-            <Text style={[styles.tipText, { color: colors.text, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }]}>
-              X: {sensorData.x} | Y: {sensorData.y} | Z: {sensorData.z}{'\n'}
-              Magnitude: {sensorData.mag}{'\n'}
-              Threshold: 0.15{'\n'}
-              {isTracking ? '✅ Tracking Active' : '⏸️ Tracking Paused'}
             </Text>
           </View>
         </View>

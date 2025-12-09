@@ -7,6 +7,7 @@ import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ActivityTrackerScreen from './screens/ActivityTrackerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +52,13 @@ export default function App() {
         <Stack.Screen 
           name="Profile" 
           component={ProfileScreen}
+          options={{ 
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="ActivityTracker" 
+          component={ActivityTrackerScreen}
           options={{ 
             headerShown: false
           }}
