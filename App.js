@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ThemeProvider } from './ThemeContext';
 import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
@@ -11,9 +12,10 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Splash"
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Splash"
         screenOptions={{
           headerStyle: {
             backgroundColor: '#6200ee',
@@ -43,8 +45,7 @@ export default function App() {
           name="Home" 
           component={HomeScreen}
           options={{ 
-            title: 'Home',
-            headerLeft: null // Prevent going back to login
+            headerShown: false // Hide header completely
           }}
         />
         <Stack.Screen 
@@ -56,5 +57,6 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </ThemeProvider>
   );
 }

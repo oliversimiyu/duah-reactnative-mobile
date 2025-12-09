@@ -10,8 +10,10 @@ import {
   Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '../ThemeContext';
 
 export default function LoginScreen({ navigation }) {
+  const { isDarkMode, colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -33,26 +35,26 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar style="light" />
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View style={styles.content}>
-        <Text style={styles.title}>Duah Tech</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Duah Tech</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to continue</Text>
 
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textTertiary}
           />
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
@@ -60,7 +62,7 @@ export default function LoginScreen({ navigation }) {
             placeholderTextColor="#999"
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleLogin}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
 
@@ -68,8 +70,8 @@ export default function LoginScreen({ navigation }) {
             style={styles.linkButton}
             onPress={() => navigation.navigate('Signup')}
           >
-            <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
+            <Text style={[styles.linkText, { color: colors.textSecondary }]}>
+              Don't have an account? <Text style={[styles.linkTextBold, { color: colors.primary }]}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -81,7 +83,6 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   content: {
     flex: 1,
@@ -91,29 +92,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 40,
   },
   form: {
     width: '100%',
   },
   input: {
-    backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderRadius: 10,
     marginBottom: 15,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
   },
   button: {
-    backgroundColor: '#6200ee',
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -129,11 +125,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#666',
     fontSize: 14,
   },
   linkTextBold: {
-    color: '#6200ee',
     fontWeight: 'bold',
   },
 });

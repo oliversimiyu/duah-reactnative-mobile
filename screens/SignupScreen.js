@@ -11,8 +11,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '../ThemeContext';
 
 export default function SignupScreen({ navigation }) {
+  const { isDarkMode, colors } = useTheme();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,25 +48,25 @@ export default function SignupScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar style="light" />
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Join Duah Tech</Text>
-          <Text style={styles.subtitle}>Sign up to get started</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Join Duah Tech</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign up to get started</Text>
 
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
               placeholder="Full Name"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
             />
 
             <TextInput
@@ -95,7 +97,7 @@ export default function SignupScreen({ navigation }) {
               placeholderTextColor="#999"
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleSignup}>
               <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
 
@@ -103,8 +105,8 @@ export default function SignupScreen({ navigation }) {
               style={styles.linkButton}
               onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.linkText}>
-                Already have an account? <Text style={styles.linkTextBold}>Login</Text>
+              <Text style={[styles.linkText, { color: colors.textSecondary }]}>
+                Already have an account? <Text style={[styles.linkTextBold, { color: colors.primary }]}>Login</Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -117,7 +119,6 @@ export default function SignupScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     flexGrow: 1,

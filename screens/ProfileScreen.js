@@ -11,8 +11,10 @@ import {
   Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme } from '../ThemeContext';
 
 export default function ProfileScreen({ navigation, route }) {
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const [profile, setProfile] = useState({
     name: route.params?.userName || 'User',
     email: 'user@duahtech.com',
@@ -27,7 +29,6 @@ export default function ProfileScreen({ navigation, route }) {
     notifications: true,
     dailyReminders: true,
     weeklyReports: false,
-    darkMode: false,
     waterReminder: true,
     activityTracking: true,
   });
@@ -37,7 +38,6 @@ export default function ProfileScreen({ navigation, route }) {
   const handleSave = () => {
     setIsEditing(false);
     Alert.alert('Success', 'Profile updated successfully!');
-    // Update the navigation params so HomeScreen can access the new name
     if (route.params?.updateUserName) {
       route.params.updateUserName(profile.name);
     }
@@ -64,53 +64,54 @@ export default function ProfileScreen({ navigation, route }) {
   };
 
   const SettingRow = ({ label, value, onValueChange, type = 'switch' }) => (
-    <View style={styles.settingRow}>
-      <Text style={styles.settingLabel}>{label}</Text>
+    <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
       {type === 'switch' ? (
         <Switch
           value={value}
           onValueChange={onValueChange}
-          trackColor={{ false: '#E0E0E0', true: '#A78BFA' }}
-          thumbColor={value ? '#6200ee' : '#F4F4F4'}
+          trackColor={{ false: '#E0E0E0', true: colors.primaryLight }}
+          thumbColor={value ? colors.primary : '#F4F4F4'}
           ios_backgroundColor="#E0E0E0"
         />
       ) : (
-        <Text style={styles.settingValue}>{value}</Text>
+        <Text style={[styles.settingValue, { color: colors.textSecondary }]}>{value}</Text>
       )}
     </View>
   );
 
   const InfoRow = ({ label, value, onChangeText, editable }) => (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
+    <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.infoLabel, { color: colors.text }]}>{label}</Text>
       {editable && isEditing ? (
         <TextInput
-          style={styles.infoInput}
+          style={[styles.infoInput, { backgroundColor: colors.surfaceVariant, color: colors.text }]}
           value={value}
           onChangeText={onChangeText}
           placeholder={label}
+          placeholderTextColor={colors.textSecondary}
         />
       ) : (
-        <Text style={styles.infoValue}>{value}</Text>
+        <Text style={[styles.infoValue, { color: colors.textSecondary }]}>{value}</Text>
       )}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
       
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity 
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surfaceVariant }]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={[styles.backIcon, { color: colors.text }]}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile & Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Profile & Settings</Text>
         <TouchableOpacity 
-          style={styles.editButton}
+          style={[styles.editButton, { backgroundColor: colors.primary }]}
           onPress={() => isEditing ? handleSave() : setIsEditing(true)}
         >
           <Text style={styles.editText}>{isEditing ? 'Save' : 'Edit'}</Text>
@@ -119,27 +120,27 @@ export default function ProfileScreen({ navigation, route }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Picture Section */}
-        <View style={styles.profileSection}>
+        <View style={[styles.profileSection, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
+            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
               <Text style={styles.avatarText}>
                 {profile.name.charAt(0).toUpperCase()}
               </Text>
             </View>
             {isEditing && (
-              <TouchableOpacity style={styles.changePhotoButton}>
+              <TouchableOpacity style={[styles.changePhotoButton, { backgroundColor: colors.surface, borderColor: colors.background }]}>
                 <Text style={styles.changePhotoText}>📷</Text>
               </TouchableOpacity>
             )}
           </View>
-          <Text style={styles.profileName}>{profile.name}</Text>
-          <Text style={styles.profileEmail}>{profile.email}</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>{profile.name}</Text>
+          <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{profile.email}</Text>
         </View>
 
         {/* Personal Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Personal Information</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
             <InfoRow 
               label="Full Name" 
               value={profile.name}
@@ -169,8 +170,8 @@ export default function ProfileScreen({ navigation, route }) {
 
         {/* Health Information */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Health Metrics</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Health Metrics</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
             <InfoRow 
               label="Height (cm)" 
               value={profile.height}
@@ -189,9 +190,9 @@ export default function ProfileScreen({ navigation, route }) {
               onChangeText={(text) => setProfile({...profile, gender: text})}
               editable={true}
             />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>BMI</Text>
-              <Text style={[styles.infoValue, styles.bmiValue]}>
+            <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.infoLabel, { color: colors.text }]}>BMI</Text>
+              <Text style={[styles.infoValue, styles.bmiValue, { color: colors.primary }]}>
                 {(profile.weight / ((profile.height / 100) ** 2)).toFixed(1)}
               </Text>
             </View>
@@ -200,8 +201,8 @@ export default function ProfileScreen({ navigation, route }) {
 
         {/* Notifications Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
             <SettingRow
               label="Push Notifications"
               value={settings.notifications}
@@ -227,57 +228,62 @@ export default function ProfileScreen({ navigation, route }) {
 
         {/* App Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Settings</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>App Settings</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
             <SettingRow
               label="Activity Tracking"
               value={settings.activityTracking}
               onValueChange={(value) => setSettings({...settings, activityTracking: value})}
             />
-            <SettingRow
-              label="Dark Mode"
-              value={settings.darkMode}
-              onValueChange={(value) => setSettings({...settings, darkMode: value})}
-            />
+            <View style={[styles.settingRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Dark Mode</Text>
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: '#E0E0E0', true: colors.primaryLight }}
+                thumbColor={isDarkMode ? colors.primary : '#F4F4F4'}
+                ios_backgroundColor="#E0E0E0"
+              />
+            </View>
           </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <TouchableOpacity style={styles.actionButton}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.actionIcon}>📊</Text>
-            <Text style={styles.actionText}>View Activity History</Text>
-            <Text style={styles.actionArrow}>›</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>View Activity History</Text>
+            <Text style={[styles.actionArrow, { color: colors.textSecondary }]}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.actionIcon}>🎯</Text>
-            <Text style={styles.actionText}>Manage Goals</Text>
-            <Text style={styles.actionArrow}>›</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Manage Goals</Text>
+            <Text style={[styles.actionArrow, { color: colors.textSecondary }]}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.actionIcon}>🔒</Text>
-            <Text style={styles.actionText}>Privacy & Security</Text>
-            <Text style={styles.actionArrow}>›</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Privacy & Security</Text>
+            <Text style={[styles.actionArrow, { color: colors.textSecondary }]}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.actionIcon}>❓</Text>
-            <Text style={styles.actionText}>Help & Support</Text>
-            <Text style={styles.actionArrow}>›</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Help & Support</Text>
+            <Text style={[styles.actionArrow, { color: colors.textSecondary }]}>›</Text>
           </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { backgroundColor: colors.error }]}
           onPress={handleLogout}
         >
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
         {/* App Version */}
-        <Text style={styles.versionText}>Duah Tech v1.0.0</Text>
-
+        <Text style={[styles.versionText, { color: colors.textSecondary }]}>Duah Tech v1.0.0</Text>
+        
         <View style={styles.bottomSpacing} />
       </ScrollView>
     </View>
@@ -287,10 +293,8 @@ export default function ProfileScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
-    backgroundColor: '#FFFFFF',
     paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -298,30 +302,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 24,
-    color: '#000000',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#000000',
   },
   editButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#6200ee',
   },
   editText: {
     fontSize: 15,
@@ -331,19 +330,15 @@ const styles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',
     paddingVertical: 32,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 16,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#6200ee',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -359,24 +354,21 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#F8F9FA',
   },
   changePhotoText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   profileName: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#000000',
+    marginTop: 16,
     marginBottom: 4,
   },
   profileEmail: {
     fontSize: 15,
-    color: '#8E8E93',
   },
   section: {
     marginTop: 24,
@@ -385,11 +377,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#000000',
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 4,
     ...Platform.select({
@@ -411,32 +401,26 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   infoLabel: {
     fontSize: 15,
-    color: '#000000',
     fontWeight: '500',
     flex: 1,
   },
   infoValue: {
     fontSize: 15,
-    color: '#8E8E93',
     flex: 1,
     textAlign: 'right',
   },
   infoInput: {
     fontSize: 15,
-    color: '#000000',
     flex: 1,
     textAlign: 'right',
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: '#F8F9FA',
     borderRadius: 8,
   },
   bmiValue: {
-    color: '#6200ee',
     fontWeight: '700',
   },
   settingRow: {
@@ -446,21 +430,17 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   settingLabel: {
     fontSize: 15,
-    color: '#000000',
     fontWeight: '500',
   },
   settingValue: {
     fontSize: 15,
-    color: '#8E8E93',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -482,32 +462,18 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 15,
-    color: '#000000',
     fontWeight: '500',
     flex: 1,
   },
   actionArrow: {
     fontSize: 24,
-    color: '#8E8E93',
   },
   logoutButton: {
-    backgroundColor: '#FF3B30',
     borderRadius: 16,
     padding: 16,
     marginHorizontal: 16,
     marginTop: 32,
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
   },
   logoutText: {
     fontSize: 17,
@@ -516,7 +482,6 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 13,
-    color: '#8E8E93',
     textAlign: 'center',
     marginTop: 24,
   },
