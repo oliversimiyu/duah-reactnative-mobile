@@ -23,8 +23,10 @@ export default function LoginScreen({ navigation }) {
     
     // Simple validation (you would typically call an API here)
     if (email && password) {
+      // Extract name from email for demo purposes
+      const userName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
       Alert.alert('Success', 'Login successful!');
-      navigation.navigate('Home');
+      navigation.navigate('Home', { userName });
     }
   };
 

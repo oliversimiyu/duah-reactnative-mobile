@@ -38,7 +38,7 @@ export default function SignupScreen({ navigation }) {
     Alert.alert('Success', 'Account created successfully!', [
       {
         text: 'OK',
-        onPress: () => navigation.navigate('Login'),
+        onPress: () => navigation.navigate('Login', { newUserName: name }),
       },
     ]);
   };

@@ -5,6 +5,7 @@ import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
+import ProfileScreen from './screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +45,13 @@ export default function App() {
           options={{ 
             title: 'Home',
             headerLeft: null // Prevent going back to login
+          }}
+        />
+        <Stack.Screen 
+          name="Profile" 
+          component={ProfileScreen}
+          options={{ 
+            headerShown: false
           }}
         />
       </Stack.Navigator>
