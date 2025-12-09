@@ -1,7 +1,7 @@
 {
   "name": "duah-tech",
   "version": "1.0.0",
-  "description": "Duah Tech - React Native mobile app with authentication",
+  "description": "Duah Tech - Wellness app for mindful living and healthy habits",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",

@@ -53,7 +53,7 @@ export default function SplashScreen({ navigation }) {
           </View>
         </View>
         <Text style={styles.title}>Duah Tech</Text>
-        <Text style={styles.subtitle}>Welcome to Innovation</Text>
+        <Text style={styles.subtitle}>Your Wellness Journey Starts Here</Text>
         <ActivityIndicator
           size="large"
           color="#ffffff"
