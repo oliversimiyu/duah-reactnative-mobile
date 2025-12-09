@@ -60,7 +60,9 @@ const lightColors = {
   
   // Status colors
   error: '#FF3B30',
+  errorLight: '#FFE5E5',
   success: '#4CAF50',
+  successLight: '#E8F5E9',
   warning: '#FF9800',
   info: '#2196F3',
   
@@ -106,7 +108,9 @@ const darkColors = {
   
   // Status colors
   error: '#FF453A',
+  errorLight: '#3A1A1A',
   success: '#66BB6A',
+  successLight: '#1A3A1A',
   warning: '#FFB74D',
   info: '#42A5F5',
   

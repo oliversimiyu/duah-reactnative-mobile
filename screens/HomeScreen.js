@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,19 +6,48 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Accelerometer } from 'expo-sensors';
+import * as Location from 'expo-location';
 import { useTheme } from '../ThemeContext';
 
 export default function HomeScreen({ navigation, route }) {
   const { isDarkMode, colors } = useTheme();
   const [userName, setUserName] = useState(route.params?.userName || 'User');
   const [currentDate, setCurrentDate] = useState('');
+  
+  // Activity tracking states
+  const [steps, setSteps] = useState(0);
+  const [calories, setCalories] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [heartRate, setHeartRate] = useState(72);
+  const [isTracking, setIsTracking] = useState(false);
+  const [sensorData, setSensorData] = useState({ x: 0, y: 0, z: 0, mag: 0 });
+  
+  // Step detection variables
+  const lastMagnitude = useRef(1);
+  const lastTimestamp = useRef(0);
+  const stepThreshold = 0.15; // Lower threshold for better detection
+  const dailyStepGoal = 10000;
+  const accelerometerSubscription = useRef(null);
+  
+  // Location tracking
+  const [locationSubscription, setLocationSubscription] = useState(null);
+  const lastPosition = useRef(null);
 
   useEffect(() => {
     const date = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     setCurrentDate(date.toLocaleDateString('en-US', options));
+    
+    // Start tracking automatically
+    startTracking();
+    
+    return () => {
+      stopTracking();
+    };
   }, []);
 
   useEffect(() => {
@@ -26,6 +55,141 @@ export default function HomeScreen({ navigation, route }) {
       setUserName(route.params.userName);
     }
   }, [route.params?.userName]);
+  
+  // Calculate calories based on steps (approximately 0.04 calories per step)
+  useEffect(() => {
+    setCalories(Math.round(steps * 0.04));
+  }, [steps]);
+
+  const startTracking = async () => {
+    try {
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Location permission denied - distance tracking disabled');
+      }
+      
+      // Start accelerometer for step counting
+      Accelerometer.setUpdateInterval(100); // Update every 100ms
+      
+      const subscription = Accelerometer.addListener(accelerometerData => {
+        const { x, y, z } = accelerometerData;
+        const currentTimestamp = Date.now();
+        
+        // Calculate magnitude of acceleration vector
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        
+        // Update sensor data for debugging
+        setSensorData({ x: x.toFixed(2), y: y.toFixed(2), z: z.toFixed(2), mag: magnitude.toFixed(2) });
+        
+        // Detect step by comparing magnitude changes
+        // A step creates a significant change in total acceleration
+        const magnitudeChange = Math.abs(magnitude - lastMagnitude.current);
+        
+        if (magnitudeChange > stepThreshold) {
+          // Prevent double counting (minimum 300ms between steps)
+          // Average walking pace is about 2 steps per second
+          if (currentTimestamp - lastTimestamp.current > 300) {
+            setSteps(prevSteps => {
+              const newSteps = prevSteps + 1;
+              console.log('Step detected! Total steps:', newSteps);
+              return newSteps;
+            });
+            lastTimestamp.current = currentTimestamp;
+            
+            // Simulate heart rate variation during activity
+            setHeartRate(prev => Math.min(120, Math.max(70, prev + (Math.random() * 4 - 2))));
+          }
+        }
+        
+        lastMagnitude.current = magnitude;
+      });
+      
+      accelerometerSubscription.current = subscription;
+      
+      // Start location tracking for distance
+      if (status === 'granted') {
+        const locSubscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 5000,
+            distanceInterval: 10,
+          },
+          (location) => {
+            if (lastPosition.current) {
+              const dist = calculateDistance(
+                lastPosition.current.coords.latitude,
+                lastPosition.current.coords.longitude,
+                location.coords.latitude,
+                location.coords.longitude
+              );
+              setDistance(prevDistance => prevDistance + dist);
+            }
+            lastPosition.current = location;
+          }
+        );
+        setLocationSubscription(locSubscription);
+      }
+      
+      setIsTracking(true);
+      console.log('Activity tracking started');
+    } catch (error) {
+      console.error('Error starting tracking:', error);
+      Alert.alert('Error', 'Failed to start activity tracking: ' + error.message);
+    }
+  };
+
+  const stopTracking = () => {
+    console.log('Stopping activity tracking');
+    if (accelerometerSubscription.current) {
+      accelerometerSubscription.current.remove();
+      accelerometerSubscription.current = null;
+    }
+    Accelerometer.removeAllListeners();
+    if (locationSubscription) {
+      locationSubscription.remove();
+      setLocationSubscription(null);
+    }
+    setIsTracking(false);
+  };
+
+  const resetStats = () => {
+    Alert.alert(
+      'Reset Stats',
+      'Are you sure you want to reset all activity stats?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            setSteps(0);
+            setCalories(0);
+            setDistance(0);
+            setHeartRate(72);
+            lastPosition.current = null;
+          },
+        },
+      ]
+    );
+  };
+
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  };
+
+  const toRad = (degrees) => {
+    return degrees * (Math.PI / 180);
+  };
 
   const StatCard = ({ icon, value, label, unit, color }) => (
     <View style={[styles.statCard, { backgroundColor: colors.cardBackground }]}>
@@ -75,11 +239,19 @@ export default function HomeScreen({ navigation, route }) {
       
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { color: colors.textSecondary }]}>Good day,</Text>
           <Text style={[styles.userName, { color: colors.text }]}>{userName}</Text>
           <Text style={[styles.date, { color: colors.textSecondary }]}>{currentDate}</Text>
         </View>
+        <TouchableOpacity 
+          style={[styles.trackingButton, { backgroundColor: isTracking ? colors.success : colors.error }]}
+          onPress={() => isTracking ? stopTracking() : startTracking()}
+        >
+          <Text style={styles.trackingButtonText}>
+            {isTracking ? '⏸️' : '▶️'}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.profileButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('Profile', {
@@ -94,13 +266,26 @@ export default function HomeScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Main Activity Stats */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Activity</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Activity</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity 
+                onPress={() => setSteps(prev => prev + 10)}
+                style={{ marginRight: 16 }}
+              >
+                <Text style={[styles.resetText, { color: colors.primary }]}>+10 Test</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={resetStats}>
+                <Text style={[styles.resetText, { color: colors.error }]}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           <MainStatCard
             icon="🚶"
-            value="8,432"
+            value={steps.toLocaleString()}
             label="Steps"
             unit="steps"
-            progress={67}
+            progress={Math.min(100, Math.round((steps / dailyStepGoal) * 100))}
             color={colors.primary}
           />
         </View>
@@ -111,30 +296,30 @@ export default function HomeScreen({ navigation, route }) {
           <View style={styles.statsGrid}>
             <StatCard
               icon="❤️"
-              value="72"
+              value={Math.round(heartRate)}
               label="Heart Rate"
               unit="bpm"
               color="#FF6B6B"
             />
             <StatCard
               icon="🔥"
-              value="524"
+              value={calories}
               label="Calories"
               unit="kcal"
               color="#FF9F43"
             />
             <StatCard
-              icon="💤"
-              value="7.5"
-              label="Sleep"
-              unit="hrs"
+              icon="📍"
+              value={distance.toFixed(2)}
+              label="Distance"
+              unit="km"
               color="#5F27CD"
             />
             <StatCard
-              icon="💧"
-              value="6"
-              label="Water"
-              unit="cups"
+              icon="⏱️"
+              value={Math.round(steps / 100)}
+              label="Active Time"
+              unit="min"
               color="#00D2D3"
             />
           </View>
@@ -160,6 +345,21 @@ export default function HomeScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
+          {steps > 0 && (
+            <View style={[styles.activityCard, { backgroundColor: colors.cardBackground }]}>
+              <View style={styles.activityIcon}>
+                <Text style={styles.activityIconText}>🚶</Text>
+              </View>
+              <View style={styles.activityInfo}>
+                <Text style={[styles.activityTitle, { color: colors.text }]}>Walking Activity</Text>
+                <Text style={[styles.activityDetails, { color: colors.textSecondary }]}>
+                  {steps.toLocaleString()} steps • {distance.toFixed(2)} km • {calories} kcal
+                </Text>
+              </View>
+              <Text style={[styles.activityTime, { color: colors.textSecondary }]}>Active</Text>
+            </View>
+          )}
+
           <View style={[styles.activityCard, { backgroundColor: colors.cardBackground }]}>
             <View style={styles.activityIcon}>
               <Text style={styles.activityIconText}>🏃</Text>
@@ -181,16 +381,31 @@ export default function HomeScreen({ navigation, route }) {
             </View>
             <Text style={[styles.activityTime, { color: colors.textSecondary }]}>4h ago</Text>
           </View>
+        </View>
 
-          <View style={[styles.activityCard, { backgroundColor: colors.cardBackground }]}>
-            <View style={styles.activityIcon}>
-              <Text style={styles.activityIconText}>💧</Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <Text style={[styles.activityTitle, { color: colors.text }]}>Hydration Goal</Text>
-              <Text style={[styles.activityDetails, { color: colors.textSecondary }]}>6 glasses completed</Text>
-            </View>
-            <Text style={[styles.activityTime, { color: colors.textSecondary }]}>Just now</Text>
+        {/* Activity Status */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Activity Status</Text>
+          <View style={[styles.tipCard, { backgroundColor: isTracking ? colors.successLight : colors.errorLight }]}>
+            <Text style={styles.tipIcon}>{isTracking ? '🏃' : '⏸️'}</Text>
+            <Text style={[styles.tipText, { color: colors.text }]}>
+              {isTracking 
+                ? 'Activity tracking is active. Your steps, distance, and calories are being monitored in real-time.' 
+                : 'Activity tracking is paused. Press the play button in the header to resume tracking.'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Sensor Debug Info */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Sensor Debug</Text>
+          <View style={[styles.tipCard, { backgroundColor: colors.surfaceVariant }]}>
+            <Text style={[styles.tipText, { color: colors.text, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }]}>
+              X: {sensorData.x} | Y: {sensorData.y} | Z: {sensorData.z}{'\n'}
+              Magnitude: {sensorData.mag}{'\n'}
+              Threshold: 0.15{'\n'}
+              {isTracking ? '✅ Tracking Active' : '⏸️ Tracking Paused'}
+            </Text>
           </View>
         </View>
 
@@ -200,7 +415,7 @@ export default function HomeScreen({ navigation, route }) {
           <View style={[styles.tipCard, { backgroundColor: colors.primaryLight }]}>
             <Text style={styles.tipIcon}>💡</Text>
             <Text style={[styles.tipText, { color: colors.text }]}>
-              Stay hydrated! Aim to drink at least 8 glasses of water throughout the day to maintain optimal health and energy levels.
+              Walk at least 10,000 steps daily! Regular walking improves cardiovascular health, strengthens bones, and boosts your mood.
             </Text>
           </View>
         </View>
@@ -236,6 +451,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  trackingButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  trackingButtonText: {
+    fontSize: 20,
+  },
   profileButton: {
     width: 48,
     height: 48,
@@ -247,6 +473,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  resetText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   section: {
     marginTop: 24,
