@@ -368,7 +368,11 @@ export default function HomeScreen({ navigation, route }) {
               label="Track Activity" 
               onPress={() => navigation.navigate('ActivityTracker')}
             />
-            <QuickActionButton icon="🍎" label="Log Meal" />
+            <QuickActionButton 
+              icon="⌚" 
+              label="Wearables" 
+              onPress={() => navigation.navigate('Wearables')}
+            />
             <QuickActionButton icon="💊" label="Medication" />
             <QuickActionButton icon="📊" label="Reports" />
           </View>
