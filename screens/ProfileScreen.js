@@ -251,6 +251,14 @@ export default function ProfileScreen({ navigation, route }) {
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+            onPress={() => navigation.navigate('Wearables')}
+          >
+            <Text style={styles.actionIcon}>⌚</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Connect Wearables</Text>
+            <Text style={[styles.actionArrow, { color: colors.textSecondary }]}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}>
             <Text style={styles.actionIcon}>📊</Text>
             <Text style={[styles.actionText, { color: colors.text }]}>View Activity History</Text>

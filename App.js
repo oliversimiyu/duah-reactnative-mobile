@@ -8,6 +8,7 @@ import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ActivityTrackerScreen from './screens/ActivityTrackerScreen';
+import WearablesScreen from './screens/WearablesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -59,6 +60,13 @@ export default function App() {
         <Stack.Screen 
           name="ActivityTracker" 
           component={ActivityTrackerScreen}
+          options={{ 
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="Wearables" 
+          component={WearablesScreen}
           options={{ 
             headerShown: false
           }}
