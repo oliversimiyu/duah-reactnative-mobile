@@ -289,8 +289,7 @@ export default function HomeScreen({ navigation, route }) {
         <TouchableOpacity 
           style={[styles.profileButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('Profile', {
-            userName: userName,
-            updateUserName: setUserName
+            userName: userName
           })}
         >
           <Text style={styles.profileButtonText}>{userName.charAt(0).toUpperCase()}</Text>
