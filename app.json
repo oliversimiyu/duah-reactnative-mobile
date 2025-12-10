@@ -40,6 +40,18 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Duah Tech to use your location for activity tracking."
         }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": [
+            "peripheral",
+            "central"
+          ],
+          "bluetoothAlwaysUsageDescription": "Allow Duah Tech to connect to your smartwatch and fitness devices to sync health data.",
+          "bluetoothPeripheralUsageDescription": "Allow Duah Tech to connect to your smartwatch and fitness devices."
+        }
       ]
     ],
     "web": {
