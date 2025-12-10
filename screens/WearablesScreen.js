@@ -93,7 +93,17 @@ export default function WearablesScreen({ navigation }) {
     let discoveredCount = 0;
     const interval = setInterval(() => {
       if (discoveredCount < mockDevicePool.length) {
-        setAvailableDevices(prev => [...prev, mockDevicePool[discoveredCount]]);
+        const device = mockDevicePool[discoveredCount];
+        // Ensure all required properties are present
+        const safeDevice = {
+          id: device.id,
+          name: device.name || 'Unknown Device',
+          brand: device.brand || 'Unknown',
+          type: device.type || 'Smart Watch',
+          icon: device.icon || '⌚',
+          rssi: device.rssi || -70,
+        };
+        setAvailableDevices(prev => [...prev, safeDevice]);
         discoveredCount++;
       } else {
         clearInterval(interval);
@@ -184,20 +194,25 @@ export default function WearablesScreen({ navigation }) {
     return `${diffDays}d ago`;
   };
 
-  const renderConnectedDevice = (device) => (
-    <View key={device.id} style={[styles.deviceCard, { backgroundColor: colors.card }]}>
-      <View style={styles.deviceHeader}>
-        <View style={styles.deviceInfo}>
-          <Text style={styles.deviceIcon}>{device.icon}</Text>
-          <View style={styles.deviceDetails}>
-            <Text style={[styles.deviceName, { color: colors.text }]}>
-              {device.name}
-            </Text>
-            <Text style={[styles.deviceType, { color: colors.textSecondary }]}>
-              {device.type}
-            </Text>
+  const renderConnectedDevice = (device) => {
+    if (!device || !device.id) {
+      return null; // Safety check
+    }
+    
+    return (
+      <View key={device.id} style={[styles.deviceCard, { backgroundColor: colors.card }]}>
+        <View style={styles.deviceHeader}>
+          <View style={styles.deviceInfo}>
+            <Text style={styles.deviceIcon}>{device.icon || '⌚'}</Text>
+            <View style={styles.deviceDetails}>
+              <Text style={[styles.deviceName, { color: colors.text }]}>
+                {device.name || 'Unknown Device'}
+              </Text>
+              <Text style={[styles.deviceType, { color: colors.textSecondary }]}>
+                {device.type || 'Smart Watch'}
+              </Text>
+            </View>
           </View>
-        </View>
         <View style={[styles.connectedBadge, { backgroundColor: colors.success + '20' }]}>
           <View style={[styles.connectedDot, { backgroundColor: colors.success }]} />
           <Text style={[styles.connectedText, { color: colors.success }]}>Connected</Text>
@@ -232,24 +247,31 @@ export default function WearablesScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </View>
-  );
+    );
+  };
 
-  const renderAvailableDevice = (device) => (
-    <TouchableOpacity
-      key={device.id}
-      style={[styles.availableDevice, { backgroundColor: colors.card }]}
-      onPress={() => connectDevice(device)}
-    >
-      <Text style={styles.deviceIcon}>{device.icon}</Text>
-      <View style={styles.deviceDetails}>
-        <Text style={[styles.deviceName, { color: colors.text }]}>{device.name}</Text>
-        <Text style={[styles.deviceType, { color: colors.textSecondary }]}>
-          {device.type} • Signal: {Math.abs(device.rssi)} dBm
-        </Text>
-      </View>
-      <Text style={[styles.connectText, { color: colors.primary }]}>Connect</Text>
-    </TouchableOpacity>
-  );
+  const renderAvailableDevice = (device) => {
+    if (!device || !device.id) {
+      return null; // Safety check
+    }
+    
+    return (
+      <TouchableOpacity
+        key={device.id}
+        style={[styles.availableDevice, { backgroundColor: colors.card }]}
+        onPress={() => connectDevice(device)}
+      >
+        <Text style={styles.deviceIcon}>{device.icon || '⌚'}</Text>
+        <View style={styles.deviceDetails}>
+          <Text style={[styles.deviceName, { color: colors.text }]}>{device.name || 'Unknown Device'}</Text>
+          <Text style={[styles.deviceType, { color: colors.textSecondary }]}>
+            {device.type || 'Smart Watch'} • Signal: {Math.abs(device.rssi || -70)} dBm
+          </Text>
+        </View>
+        <Text style={[styles.connectText, { color: colors.primary }]}>Connect</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
