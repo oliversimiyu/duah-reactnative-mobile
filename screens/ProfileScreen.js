@@ -38,9 +38,8 @@ export default function ProfileScreen({ navigation, route }) {
   const handleSave = () => {
     setIsEditing(false);
     Alert.alert('Success', 'Profile updated successfully!');
-    if (route.params?.updateUserName) {
-      route.params.updateUserName(profile.name);
-    }
+    // Navigate back to refresh the home screen
+    navigation.goBack();
   };
 
   const handleLogout = () => {
